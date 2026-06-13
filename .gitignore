@@ -6,8 +6,7 @@ Thumbs.db
 Desktop.ini
 
 .idea/
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 *.swp
 *.swo
 
@@ -37,6 +36,7 @@ k8s/*secret*.yaml
 # Python (auth-service, notes-service, notification-service)
 # =========================
 __pycache__/
+.pycache/
 *.py[cod]
 *.pyo
 *.pyd
