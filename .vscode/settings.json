@@ -1,5 +1,0 @@
-{
-    "yaml.schemas": {
-        "kubernetes://schema/v1@service": "file:///c%3A/Users/Abhishek_Kumar/Desktop/k8s-multi-service-app/k8s/auth-service.yaml"
-    }
-}
