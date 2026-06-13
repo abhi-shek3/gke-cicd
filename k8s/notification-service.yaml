@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-deployment
+  namespace: notes-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification
+  template:
+    metadata:
+      labels:
+        app: notification
+    spec:
+      containers:
+      - name: notification-service
+        image: us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/notification-service:v1
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          failureThreshold: 30
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 10
+        envFrom:
+        - configMapRef:
+            name: app-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: notes-app
+spec:
+  type: ClusterIP
+  selector:
+    app: notification
+  ports:
+  - port: 8000
+    targetPort: 8000

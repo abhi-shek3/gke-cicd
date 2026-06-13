@@ -1,0 +1,24 @@
+# Protect the Notes Service
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: notes-pdb
+  namespace: notes-app
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: notes
+
+---
+# Protect the Auth Service
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: auth-pdb
+  namespace: notes-app
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: auth

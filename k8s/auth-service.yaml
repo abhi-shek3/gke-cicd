@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  namespace: notes-app
+spec:
+  replicas: 3 # Running 3 copies for high availability!
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth-service
+        image: us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/auth-service:v3
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: JWT_SECRET_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: notes-app
+spec:
+  type: ClusterIP
+  selector:
+    app: auth
+  ports:
+  - port: 8000
+    targetPort: 8000

@@ -1,0 +1,71 @@
+# 1. Default Deny All (Ingress)
+# This blocks ALL incoming traffic to EVERY pod in the notes-app namespace by default.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: notes-app
+spec:
+  podSelector: {} # An empty selector matches all pods
+  policyTypes:
+  - Ingress
+
+---
+# 2. Allow Ingress Controller -> Frontend, Auth, and Notes
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-public-ingress
+  namespace: notes-app
+spec:
+  podSelector:
+    matchExpressions:
+      - {key: app, operator: In, values: [frontend, auth, notes]}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx # Allows the Nginx controller namespace
+
+---
+# 3. Allow Notes Service -> Auth Service (for JWT validation)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-notes-to-auth
+  namespace: notes-app
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: notes
+
+---
+# 4. Allow Notes & Notification Services -> Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-traffic
+  namespace: notes-app
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: notification
+    - podSelector:
+        matchLabels:
+          app: notes

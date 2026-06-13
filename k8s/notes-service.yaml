@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notes-deployment
+  namespace: notes-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: notes
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1 # Never take down more than 1 pod at a time during an update
+      maxSurge: 1       # Never spin up more than 1 extra pod during an update
+  template:
+    metadata:
+      labels:
+        app: notes
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: notes
+      containers:
+      - name: notes-service
+        image: us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/notes-service:v3
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: JWT_SECRET_KEY
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notes-service
+  namespace: notes-app
+spec:
+  type: ClusterIP
+  selector:
+    app: notes
+  ports:
+  - port: 8000
+    targetPort: 8000

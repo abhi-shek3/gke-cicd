@@ -1,0 +1,35 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  auth-service:
+    image: my-k8s-app/auth-service:latest
+    build: ./auth-service
+    ports:
+      - "8000:8000" # Maps local port 8000 to container port 8000
+
+  notes-service:
+    image: my-k8s-app/notes-service:latest
+    build: ./notes-service
+    ports:
+      - "8001:8000" # Maps local port 8001 to container port 8000
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+
+  notification-service:
+    image: my-k8s-app/notification-service:latest
+    build: ./notification-service
+    environment:
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+
+  frontend:
+    image: my-k8s-app/frontend:v1
+    build: ./frontend
+    ports:
+      - "5173:80" # Maps local port 5173 to Nginx port 80
