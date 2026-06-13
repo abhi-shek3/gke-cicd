@@ -1,0 +1,48 @@
+name: Build and Push to GCP
+
+on:
+  push:
+    branches:
+      - main
+    # Only run this if the actual application code changes
+    paths:
+      - 'auth-service/**'
+      - 'notes-service/**'
+      - 'notification-service/**'
+      - 'frontend/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      # Example: Building and pushing the Auth Service
+      - name: Build and Push Auth Service
+        run: |
+          docker build -t us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/auth-service:latest ./auth-service
+          docker push us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/auth-service:latest
+
+      - name: Build and Push Notes Service
+        run: |
+          docker build -t us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/notes-service:latest ./notes-service
+          docker push us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/notes-service:latest
+
+      - name: Build and Push Notification Service
+        run: |
+          docker build -t us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/notification-service:latest ./notification-service
+          docker push us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/notification-service:latest
+
+      - name: Build and Push Frontend Service
+        run: |
+          docker build -t us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/frontend:latest ./frontend
+          docker push us-central1-docker.pkg.dev/sandbox-akumar/k8s-microservices/frontend:latest
